@@ -1,6 +1,8 @@
 package gosms_starter
 
 import (
+	"strings"
+
 	logger "github.com/kordar/gologger"
 	"github.com/kordar/gosms"
 	"github.com/spf13/cast"
@@ -47,6 +49,20 @@ func (m SMSModule) _load(id string, cfg map[string]interface{}) {
 	extra := cast.ToStringMapString(cfg["extra"])
 	for k, v := range extra {
 		smsCfg.WithExtraParam(k, v)
+	}
+
+	extrastr := cast.ToString(cfg["extrastr"])
+	if extrastr != "" {
+		for _, item := range strings.Split(extrastr, ",") {
+			if item == "" {
+				continue
+			}
+			kv := strings.Split(item, "::")
+			if len(kv) != 2 {
+				continue
+			}
+			smsCfg.WithExtraParam(kv[0], kv[1])
+		}
 	}
 
 	p, err := ProvideFromConfig(id, smsCfg)
