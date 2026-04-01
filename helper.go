@@ -1,9 +1,10 @@
 package gosms_starter
 
 import (
+	"fmt"
+	"log/slog"
 	"sync"
 
-	logger "github.com/kordar/gologger"
 	"github.com/kordar/gosms"
 )
 
@@ -17,7 +18,8 @@ func Get(name string) gosms.SMSProvider {
 	defer mu.RUnlock()
 	p, ok := providers[name]
 	if !ok {
-		logger.Fatalf("sms provider %s not exist.", name)
+		slog.Error("sms provider not exist", "name", name)
+		panic(fmt.Errorf("sms provider %s not exist", name))
 	}
 	return p
 }
@@ -40,7 +42,8 @@ func ProvideFromConfig(name string, cfg *gosms.SMSConfig) (gosms.SMSProvider, er
 func ProvideEFromConfig(name string, cfg *gosms.SMSConfig) gosms.SMSProvider {
 	p, err := ProvideFromConfig(name, cfg)
 	if err != nil {
-		logger.Fatalf("[provide %s] %v", name, err)
+		slog.Error("provide sms provider failed", "name", name, "err", err)
+		panic(fmt.Errorf("provide %s failed: %w", name, err))
 	}
 	return p
 }

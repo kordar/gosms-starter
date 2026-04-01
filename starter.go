@@ -1,9 +1,10 @@
 package gosms_starter
 
 import (
+	"fmt"
+	"log/slog"
 	"strings"
 
-	logger "github.com/kordar/gologger"
 	"github.com/kordar/gosms"
 	"github.com/spf13/cast"
 )
@@ -23,8 +24,8 @@ func (m SMSModule) Name() string {
 
 func (m SMSModule) _load(id string, cfg map[string]interface{}) {
 	if id == "" {
-		logger.Fatalf("[%s] the attribute id cannot be empty.", m.Name())
-		return
+		slog.Error("sms module id cannot be empty", "module", m.Name())
+		panic(fmt.Errorf("[%s] the attribute id cannot be empty", m.Name()))
 	}
 
 	provider := cast.ToString(cfg["provider"])
@@ -34,8 +35,8 @@ func (m SMSModule) _load(id string, cfg map[string]interface{}) {
 	templateID := cast.ToString(cfg["template"])
 
 	if provider == "" {
-		logger.Fatalf("[%s] id=%s provider cannot be empty", m.Name(), id)
-		return
+		slog.Error("sms provider cannot be empty", "module", m.Name(), "id", id)
+		panic(fmt.Errorf("[%s] id=%s provider cannot be empty", m.Name(), id))
 	}
 
 	smsCfg := gosms.NewSMSConfig(provider, accessKey, secretKey)
@@ -67,12 +68,14 @@ func (m SMSModule) _load(id string, cfg map[string]interface{}) {
 
 	p, err := ProvideFromConfig(id, smsCfg)
 	if err != nil {
-		logger.Fatalf("[%s] id=%s err=%v", m.Name(), id, err)
-		return
+		slog.Error("provide sms provider failed", "module", m.Name(), "id", id, "err", err)
+		panic(fmt.Errorf("[%s] id=%s err=%w", m.Name(), id, err))
 	}
 
-	m.load(m.Name(), id, p, cfg)
-	logger.Infof("[%s] loading module '%s' successfully", m.Name(), id)
+	if m.load != nil {
+		m.load(m.Name(), id, p, cfg)
+	}
+	slog.Info("sms module loaded", "module", m.Name(), "id", id)
 }
 
 func (m SMSModule) Load(value interface{}) {
